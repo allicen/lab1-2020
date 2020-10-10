@@ -50,9 +50,9 @@ void loop()
                int number = atoi(rgbArray);
                if (number < 0 || number > 255) {
                   Serial.println("Число должно быть в пределах 0-255"); 
+                  allNumbersInput = false; 
                } else {
                   colors[i%3] = number;
-                  allNumbersInput = false; 
                }
             } else {
                allNumbersInput = false; 
