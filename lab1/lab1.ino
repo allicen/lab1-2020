@@ -39,7 +39,7 @@ void loop()
     
     while(true) {
        String command = readUserInput();
-       if (command.length() == 0) {
+       if (command.length() != 0) {
           int colors[3]; 
 
           bool allNumbersInput = true; 
