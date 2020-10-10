@@ -2,7 +2,6 @@
 #include <MD_TCS230.h>
 #include "pitches.h"
 #include "button.h"
-#include "buzzer.h"
 
 #define  S0_OUT  2
 #define  S1_OUT  3
@@ -18,32 +17,17 @@ Button buttonR(S0_OUT);
 Button buttonG(S1_OUT);
 Button buttonB(S2_OUT);
 
-bool red = true, blue = true, green = true;
-
-
-MD_TCS230 colorSensor(S2_OUT, S3_OUT, S0_OUT, S1_OUT);
+bool redPush = true, bluePush = true, greenPush = true;
+int redValue = 0, greenValue = 0, blueValue = 0; 
 
 //Компоненты: макетная плата + 3 кнопки + RGB светодиод.
 //Описание: через Serial приходят компоненты цвета для светодиода. Каждая кнопка включает/выключает одну из компонент цвета.
 
 void setup()
 {
-    Serial.begin(115200);
+    Serial.begin(9600);
     Serial.println("Started!");
-
-    sensorData whiteCalibration;
-    whiteCalibration.value[TCS230_RGB_R] = 83440;
-    whiteCalibration.value[TCS230_RGB_G] = 78370;
-    whiteCalibration.value[TCS230_RGB_B] = 271630;
-
-    sensorData blackCalibration;
-    blackCalibration.value[TCS230_RGB_R] = 10820;
-    blackCalibration.value[TCS230_RGB_G] = 9750;
-    blackCalibration.value[TCS230_RGB_B] = 35910;
-
-    colorSensor.begin();
-    colorSensor.setDarkCal(&blackCalibration);
-    colorSensor.setWhiteCal(&whiteCalibration);
+    Serial.println("Введите значения RGB через пробел (три числа от 0 до 255): ");
 
     pinMode(R_OUT, OUTPUT);
     pinMode(G_OUT, OUTPUT);
@@ -52,67 +36,109 @@ void setup()
 
 void loop() 
 {
-    colorData rgb;
-    colorSensor.read();
+    
+    while(true) {
+       String command = readUserInput();
+       if (command.length() == 0) {
+          int colors[3]; 
 
-    while (!colorSensor.available());
+          bool allNumbersInput = true; 
+          char commandArray[command.length()];
+          char *rgbArray = strtok(commandArray, " ");
+          for (int i = 0; i < strlen(rgbArray); i++) {
+            if (isdigit(colors[i%3])) {
+               int number = atoi(rgbArray);
+               if (number < 0 || number > 255) {
+                  Serial.println("Число должно быть в пределах 0-255"); 
+               } else {
+                  colors[i%3] = number;
+                  allNumbersInput = false; 
+               }
+            } else {
+               allNumbersInput = false; 
+            }
+          }
 
-    colorSensor.getRGB(&rgb);
-//    print_rgb(rgb);
-//    set_rgb_led(rgb);
+          if (allNumbersInput) {
+              char colorHide[10];
 
-    if (buttonR.wasPressed()) {
-//      setColor(0, rgb.value[TCS230_RGB_G], rgb.value[TCS230_RGB_B]);
-      print_rgb(rgb);
-      set_rgb_led(rgb, 'green');
-    }
-    if (buttonG.wasPressed()) {
-//      setColor(rgb.value[TCS230_RGB_R], 0, rgb.value[TCS230_RGB_B]);
-      print_rgb(rgb);
-      set_rgb_led(rgb, 'red');
-    }
-    if (buttonB.wasPressed()) {
-//      setColor(rgb.value[TCS230_RGB_R], rgb.value[TCS230_RGB_G], 0);
-      print_rgb(rgb);
-      set_rgb_led(rgb, 'blue');
+              redValue = colors[0]; 
+              greenValue = colors[1]; 
+              blueValue = colors[2]; 
+
+              if (buttonR.wasPressed()) {
+                strcpy(colorHide, "green");
+              }
+              if (buttonG.wasPressed()) {
+                strcpy(colorHide, "red");
+              }
+              if (buttonB.wasPressed()) {
+                strcpy(colorHide, "blue");
+              }
+              
+              setColorPushButton(colorHide);
+          } else {
+              Serial.println("Введена строка не по формату. Нужно ввесли 3 числа от 0 до 255 через пробел.");
+          }
+       }
     }
 }
 
-void print_rgb(colorData rgb)
+
+// Распечатать цифры цвета 
+void printRgb()
 {
-  Serial.print(rgb.value[TCS230_RGB_R]);
+  Serial.print("Вы ввели: ");
+  Serial.print(redValue);
   Serial.print(" ");
-  Serial.print(rgb.value[TCS230_RGB_G]);
+  Serial.print(greenValue);
   Serial.print(" ");
-  Serial.print(rgb.value[TCS230_RGB_B]);
+  Serial.print(blueValue);
   Serial.println();
 }
 
-void set_rgb_led(colorData rgb, colorHide)
-{
-  if (colorHide == 'green') {
-    if (green) {
-      green = false; 
-    } else {
-      green = true;
-    }
-  
-  } else if (colorHide == 'blue') {
-    if (blue) {
-      blue = false; 
-    } else {
-      blue = true; 
-    }
-  } else {
-    if (red) {
-      red = false; 
-    } else {
-      red = true;
-    }
-  }
 
-    
-    analogWrite(R_OUT, 255 - rgb.value[TCS230_RGB_R]);
-    analogWrite(G_OUT, 255 - rgb.value[TCS230_RGB_G]);
-    analogWrite(B_OUT, 255 - rgb.value[TCS230_RGB_B]);
+// Включить/выключить цвет по нажатию кнопки
+void setColorPushButton(char* colorHide)
+{
+    if (colorHide == "green" && greenPush) {
+        greenPush = false;
+        greenValue = 0; 
+    } 
+
+    if (colorHide == "green" && !greenPush) {
+        greenPush = true;
+    } 
+
+    if (colorHide == "blue" && bluePush) {
+        bluePush = false; 
+        blueValue = 0; 
+    } 
+
+    if (colorHide == "blue" && !bluePush) {
+        bluePush = true; 
+    } 
+
+    if (colorHide == "red" && redPush) {
+        redPush = false; 
+        redValue = 0; 
+    } 
+
+    if (colorHide == "red" && !redPush) {
+        redPush = true; 
+    }
+
+    analogWrite(R_OUT, 255 - redValue);
+    analogWrite(G_OUT, 255 - greenValue);
+    analogWrite(B_OUT, 255 - blueValue);
+
+    printRgb(); 
+}
+
+
+// Строка, которую ввел пользователь
+String readUserInput() {
+    while (!Serial.available()); // дожидаемся команды пользователя (нажатие Enter)
+    String command = Serial.readStringUntil('\n');
+    return command;
 }
