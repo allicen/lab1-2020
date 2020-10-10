@@ -18,6 +18,8 @@ Button buttonR(S0_OUT);
 Button buttonG(S1_OUT);
 Button buttonB(S2_OUT);
 
+bool red = true, blue = true, green = true;
+
 
 MD_TCS230 colorSensor(S2_OUT, S3_OUT, S0_OUT, S1_OUT);
 
@@ -56,17 +58,23 @@ void loop()
     while (!colorSensor.available());
 
     colorSensor.getRGB(&rgb);
-    print_rgb(rgb);
-    set_rgb_led(rgb);
+//    print_rgb(rgb);
+//    set_rgb_led(rgb);
 
     if (buttonR.wasPressed()) {
-      
+//      setColor(0, rgb.value[TCS230_RGB_G], rgb.value[TCS230_RGB_B]);
+      print_rgb(rgb);
+      set_rgb_led(rgb, 'green');
     }
     if (buttonG.wasPressed()) {
-      
+//      setColor(rgb.value[TCS230_RGB_R], 0, rgb.value[TCS230_RGB_B]);
+      print_rgb(rgb);
+      set_rgb_led(rgb, 'red');
     }
     if (buttonB.wasPressed()) {
-      
+//      setColor(rgb.value[TCS230_RGB_R], rgb.value[TCS230_RGB_G], 0);
+      print_rgb(rgb);
+      set_rgb_led(rgb, 'blue');
     }
 }
 
@@ -80,8 +88,30 @@ void print_rgb(colorData rgb)
   Serial.println();
 }
 
-void set_rgb_led(colorData rgb)
+void set_rgb_led(colorData rgb, colorHide)
 {
+  if (colorHide == 'green') {
+    if (green) {
+      green = false; 
+    } else {
+      green = true;
+    }
+  
+  } else if (colorHide == 'blue') {
+    if (blue) {
+      blue = false; 
+    } else {
+      blue = true; 
+    }
+  } else {
+    if (red) {
+      red = false; 
+    } else {
+      red = true;
+    }
+  }
+
+    
     analogWrite(R_OUT, 255 - rgb.value[TCS230_RGB_R]);
     analogWrite(G_OUT, 255 - rgb.value[TCS230_RGB_G]);
     analogWrite(B_OUT, 255 - rgb.value[TCS230_RGB_B]);
