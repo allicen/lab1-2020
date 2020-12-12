@@ -38,28 +38,41 @@ void loop()
 {
     
     while(true) {
-       String command = readUserInput();
-       if (command.length() != 0) {
-          int colors[3]; 
+       String command = readUserInput(); // получение строки
+            
+       if (command.length() > 0) {
+          bool success = true; 
+          int colors[3];
 
-          bool allNumbersInput = true; 
-          char commandArray[command.length()];
-          char *rgbArray = strtok(commandArray, " ");
-          for (int i = 0; i < strlen(rgbArray); i++) {
-            if (isdigit(colors[i%3])) {
-               int number = atoi(rgbArray);
-               if (number < 0 || number > 255) {
-                  Serial.println("Число должно быть в пределах 0-255"); 
-                  allNumbersInput = false; 
-               } else {
-                  colors[i%3] = number;
-               }
-            } else {
-               allNumbersInput = false; 
-            }
-          }
+          // строку в массив символов
+          int command_len = command.length() + 1; 
+          char command_char_array[command_len];
+          command.toCharArray(command_char_array, command_len);
+          
+          char *inputNumber;
+          char *comand_remainder = command_char_array;
+          int indexNumber = 0; // индекс текущего элемента
+          while ((inputNumber = strtok_r(comand_remainder, " ", &comand_remainder)) != NULL) {
+            
+             if (indexNumber > 2) {
+                Serial.println("Было введено больше 3-х чисел!"); 
+                success = false; 
+                break; 
+             }
 
-          if (allNumbersInput) {
+             int number = atoi (inputNumber); // массив символов в int      
+
+             if (number < 0 || number > 255) {
+                Serial.println("Число должно быть в пределах 0-255"); 
+                success = false; 
+                break; 
+             }
+
+             colors[indexNumber] = number; 
+             indexNumber++; 
+           }
+
+          if (success) {
               char colorHide[10];
 
               redValue = colors[0]; 
